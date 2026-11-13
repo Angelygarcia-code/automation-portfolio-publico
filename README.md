@@ -1,51 +1,48 @@
-# Angely García
-### Automatización de procesos · n8n · APIs REST · Inteligencia artificial
+# Análisis de datos de mensajería con Python y SQL
 
-Desarrollo automatizaciones para conectar herramientas, organizar información y simplificar tareas de atención y gestión comercial.
+Proyecto independiente de procesamiento y análisis de datos: convierte una exportación de mensajería de atención al cliente en un conjunto de datos limpio y calcula métricas operativas con SQL.
 
-Soy estudiante de Ingeniería Biomédica en la Universidad Tecnológica de Bolívar. Mi experiencia práctica combina flujos con n8n, integración de APIs, transformación de datos y agentes conversacionales con IA.
+## Problema
+Las exportaciones de mensajería vienen como texto plano con delimitadores y campos JSON anidados. Revisarlas a mano es lento, propenso a errores y no responde preguntas operativas: ¿cuántos mensajes fallan y por qué?, ¿cuánto tarda el equipo en responder?, ¿a qué horas llega la demanda?
 
-[LinkedIn](https://www.linkedin.com/in/angely-garcia-190330216/) · [GitHub](https://github.com/Angelygarcia-code)
+## Solución
+Un pipeline en Python que carga y limpia el archivo, extrae información de campos JSON anidados, clasifica los mensajes entrantes, guarda todo en SQLite y calcula las métricas con consultas SQL.
 
-## Proyectos destacados
+## Qué hace, paso a paso
+1. **Carga y validación:** lee el archivo delimitado por `|`, elimina los delimitadores de los extremos y descarta filas con un número distinto de campos que el encabezado.
+2. **Limpieza:** quita espacios residuales y convierte `created_at` a fecha.
+3. **Parseo de JSON anidado:** extrae el error reportado (`external_error`) y el nombre de la plantilla (`template_name`), incluso cuando el JSON viene codificado dos veces.
+4. **Clasificación básica:** etiqueta los mensajes entrantes como Queja, Soporte, Pedido u Otro con reglas por palabras clave.
+5. **Carga en SQLite y métricas con SQL:**
+   - Funnel de entrega (porcentaje de mensajes salientes por estado).
+   - SLA de respuesta (tiempo hasta la siguiente acción dentro de la conversación; CTEs y `ROW_NUMBER()`).
+   - Curva horaria de mensajes entrantes.
+   - Errores por plantilla.
 
-| Proyecto | Problema que aborda | Solución | Caso de estudio |
-|---|---|---|---|
-| Recepcionista con IA por WhatsApp | Consultas y citas repartidas entre el chat, la agenda y registros manuales | Asistente conectado con Calendar y Sheets | [Ver proyecto](proyectos/recepcionista.md) |
-| Prospección automatizada de negocios | Búsqueda y recopilación repetitiva de información comercial | Flujo de consulta, extracción y organización en Sheets | [Ver proyecto](proyectos/prospeccion.md) |
+## Herramientas
+Python · pandas · json · sqlite3 · SQL (CTE, funciones ventana)
 
-### Recepcionista con IA por WhatsApp
+## Sobre los datos
+Este repositorio usa **datos sintéticos** con la misma estructura que el archivo original (`datos_ejemplo/`). Los datos con los que desarrollé el análisis contienen conversaciones de terceros y no se publican.
 
-Integración de WhatsApp, Gemini y Google Workspace para atender consultas y gestionar información de agendamiento.
+## Cómo ejecutarlo
+```bash
+pip install -r requirements.txt
+python analisis.py
+```
+Genera `datos_limpios.csv` y `prueba.db` (ignorados por git) e imprime las métricas. Para regenerar los datos de ejemplo: `python datos_ejemplo/generar_datos_ejemplo.py`.
 
-![Vista general del recepcionista en n8n](imagenes/recepcionista-flujo.jpg)
+## Ejemplo de salida (con datos sintéticos, no son resultados reales)
+| Estado | Cantidad | % |
+|---|---|---|
+| sent | 75 | 33.33 |
+| failed | 63 | 28.00 |
+| read | 56 | 24.89 |
+| delivered | 31 | 13.78 |
 
-[Consultar problema, solución y conversación →](proyectos/recepcionista.md)
+SLA de respuesta: 109 mensajes con acción, promedio de 27.42 minutos (mínimo 1, máximo 136).
 
-### Prospección automatizada de negocios
-
-Búsqueda por ciudad y sector, consulta de sitios web y organización de información pública de contacto.
-
-![Vista general del sistema de prospección](imagenes/prospeccion-flujo.jpg)
-
-[Consultar problema, solución y funcionamiento →](proyectos/prospeccion.md)
-
-## Habilidades aplicadas
-
-- Automatización de procesos con n8n: filtros, bucles, condiciones y transformaciones.
-- Integración de APIs REST, webhooks y servicios de Google Workspace.
-- Procesamiento de datos con JavaScript y JSON.
-- Configuración de agentes conversacionales con Gemini y herramientas externas.
-- Organización de información comercial en Google Sheets.
-
-## Sobre este portafolio
-
-Selección de proyectos independientes documentados mediante casos de estudio y capturas de funcionamiento. Los archivos ejecutables y las configuraciones internas se conservan en privado.
-
-## Contacto
-
-Interesada en oportunidades como Automation Specialist Jr. y desarrolladora de automatizaciones.
-
-[Contactarme por LinkedIn](https://www.linkedin.com/in/angely-garcia-190330216/)
-
-© 2026 Angely García. Todos los derechos reservados.
+## Limitaciones y mejoras posibles
+- La clasificación por palabras clave es básica; podría reemplazarse por un modelo de IA.
+- El SLA cuenta como "acción" cualquier actividad o mensaje saliente posterior, incluidas acciones automáticas, no solo respuestas humanas.
+- La curva horaria usa la hora tal como viene en los datos; habría que confirmar la zona horaria.

@@ -1,0 +1,6 @@
+# Datos y resultados generados (pueden contener información de terceros)
+prueba.db
+datos_limpios.csv
+prueba.txt
+datos_reales/
+__pycache__/
